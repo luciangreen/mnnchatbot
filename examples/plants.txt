@@ -1,0 +1,3 @@
+Plants can grow when their measured height increases over time.
+A plant that is 10 cm on Day 1 and 13 cm on Day 3 has shown growth.
+Growth may stop later if conditions change.
