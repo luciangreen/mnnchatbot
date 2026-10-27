@@ -331,7 +331,7 @@ process_sentence(Text, interpretation{raw:Text,tokens:Tokens,negation:Neg,modali
     ),
     detect_modality(Tokens, Modality),
     detect_question_type(Tokens, QType),
-    detect_intent(Tokens, Intent).
+    detect_intent(Tokens, Text, Intent).
 
 process_text(Text, representation{sentences:Sentences, concepts:Concepts, relations:Relations, rules:Rules, laws:Laws}) :-
     split_sentences(Text, Sentences0),
@@ -404,14 +404,15 @@ detect_question_type([where|_], where) :- !.
 detect_question_type([why|_], why) :- !.
 detect_question_type([how|_], how) :- !.
 detect_question_type([which|_], which) :- !.
-detect_question_type([is|_], yes_no) :- !.
+detect_question_type([First|_], yes_no) :-
+    memberchk(First, [is, are, am, do, does, did, can, could, will, would, should, has, have, had]), !.
 detect_question_type(_, statement).
 
-detect_intent(Tokens, correction) :- member(meant, Tokens), !.
-detect_intent(Tokens, import_text) :- member(import, Tokens), !.
-detect_intent(Tokens, explain) :- member(explain, Tokens), !.
-detect_intent(Tokens, question) :- member('?', Tokens), !.
-detect_intent(_, inform).
+detect_intent(Tokens, _, correction) :- member(meant, Tokens), !.
+detect_intent(Tokens, _, import_text) :- member(import, Tokens), !.
+detect_intent(Tokens, _, explain) :- member(explain, Tokens), !.
+detect_intent(_, Text, question) :- sub_string(Text, _, 1, 0, "?"), !.
+detect_intent(_, _, inform).
 
 %%%% Text import and representation
 import_text(File, DocumentId) :-
