@@ -1,6 +1,7 @@
 :- begin_tests(mnnchatbot).
 
 :- use_module('../mnnchatbot').
+:- use_module(library(filesex)).
 
 test(reset_state) :-
     reset_state,
@@ -48,12 +49,26 @@ test(area_and_law_scoping) :-
 
 test(text_import_and_provenance) :-
     reset_state,
-    File = '/home/runner/work/mnnchatbot/mnnchatbot/examples/plants.txt',
+    source_file(mnnchatbot:reset_state, Source),
+    file_directory_name(Source, Root),
+    directory_file_path(Root, 'examples/plants.txt', File),
     import_text(File, Doc),
     document(Doc, _),
     provenance(Doc, document, File, _).
 
-test(author_mode_commit_undo) :-
+test(question_intent) :-
+    process_sentence("Could the plant stop growing?", Interpretation),
+    get_dict(intent, Interpretation, question),
+    get_dict(question_type, Interpretation, yes_no).
+
+test(text_processing) :-
+    process_text("Plants grow. Rain falls.", Representation),
+    get_dict(sentences, Representation, Sentences),
+    assertion(Sentences = ["Plants grow", "Rain falls"]),
+    get_dict(concepts, Representation, Concepts),
+    assertion(member(plants, Concepts)).
+
+test(author_mode_commit_undo, [nondet]) :-
     reset_state,
     author_mode(on),
     author_commit(add_area("Botany")),
