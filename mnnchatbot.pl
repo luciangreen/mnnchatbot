@@ -542,9 +542,35 @@ update_context(Session, Interpretation, context(Session, Topic, Areas, Entities,
     Tokens = Interpretation.tokens,
     include(content_token, Tokens, Entities),
     attention_top(5, AttentionState),
-    (context(Session, _, Areas0, _, _, _) -> Areas = Areas0 ; Areas = []),
+    (context(Session, _, Areas0, _, _, _) -> true ; Areas0 = []),
+    mentioned_areas(Tokens, Mentioned),
+    append(Areas0, Mentioned, Areas1),
+    list_to_set(Areas1, Areas),
     retractall(context(Session,_,_,_,_,_)),
     assertz(context(Session, Topic, Areas, Entities, Now, AttentionState)).
+
+%% mentioned_areas(+Tokens, -Areas) is det.
+%  Areas that a message brings into scope: an area named in it (botany), or an
+%  area with a law whose conditions mention a word of the message (a law on
+%  series_trend(plant_height, increasing) comes into scope for "Is the plant
+%  growing?"). Without this, no area was ever in scope, so no law was used.
+mentioned_areas(Tokens, Areas) :-
+    findall(A, ( area(A, _), area_mentioned(A, Tokens) ), As0),
+    list_to_set(As0, Areas).
+
+area_mentioned(A, Tokens) :-
+    atomic_list_concat(Words, '_', A),
+    member(W, Words), memberchk(W, Tokens), !.
+area_mentioned(A, Tokens) :-
+    area_law(A, _, Conditions, _, _, _),
+    term_atoms(Conditions, Atoms),
+    member(Atom, Atoms),
+    atomic_list_concat(Words, '_', Atom),
+    member(W, Words), W \== '', memberchk(W, Tokens), !.
+
+term_atoms(T, As) :- findall(A, (sub_term_atom(T, A)), As).
+sub_term_atom(T, T) :- atom(T).
+sub_term_atom(T, A) :- compound(T), T =.. [_|Args], member(X, Args), sub_term_atom(X, A).
 
 compute_attention(context(_, Topic, _, Entities, _, _), Updated) :-
     attention_update(topic(Topic), 0.2, _),

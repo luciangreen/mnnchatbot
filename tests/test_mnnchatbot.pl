@@ -95,4 +95,13 @@ test(persistence_roundtrip) :-
     load_mnn('/tmp/mnn_state.pl'),
     concept(c1, rain).
 
+% The README example: the law about plant height comes into scope and is used.
+test(readme_law_is_used) :-
+    reset_state, new_session(S), add_area("Botany", A),
+    add_law(A, area_law(A, growth_law, [series_trend(plant_height, increasing)], growing, 70, system)),
+    series_add(plant_height, day1, 10), series_add(plant_height, day2, 11), series_add(plant_height, day3, 13),
+    chat(S, "Is the plant growing?", _),
+    explain_last(S, Why),
+    Why.laws = [applicable_law(growth_law, growing, 70, botany)].
+
 :- end_tests(mnnchatbot).
